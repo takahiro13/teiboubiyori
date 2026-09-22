@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 波の上の魚。アダプティブアイコンの安全領域(中央66dp)に収めている -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,46 C32,38 43,33 52,33 C61,33 69,39 71,46 C69,53 61,59 52,59 C43,59 32,54 32,46 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M69,46 L83,35 L83,57 Z" />
+    <path
+        android:fillColor="#006A9E"
+        android:pathData="M41,43.5 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0" />
+    <path
+        android:pathData="M31,72 q8,-8 16,0 t16,0 t16,0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M31,81 q8,-8 16,0 t16,0 t16,0"
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+</vector>
