@@ -37,7 +37,7 @@
 | アプリアイコン 512x512 | store/icon-512.png |
 | フィーチャーグラフィック 1024x500 | store/feature-graphic-1024x500.png |
 | スマホのスクリーンショット (2枚以上。縦横比は2:1まで) | store/screenshots/ (3枚) |
-| プライバシーポリシーのURL | store/privacy-policy.md をWebで公開する必要あり |
+| プライバシーポリシーのURL | https://takahiro13.github.io/teiboubiyori/privacy-policy.html |
 
 ## 「アプリのコンテンツ」の回答の目安 (Play Console)
 - 広告: **なし**
