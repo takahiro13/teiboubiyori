@@ -10,3 +10,6 @@ keystore.properties
 tools/.cache/
 SESSION_LOG.md
 .claude/
+# 国土数値情報(非商用ライセンス)を加工したデータなので、公開リポジトリには含めない。
+# tools/build_ports.py で生成する。
+app/src/main/assets/ports.csv
