@@ -8,3 +8,5 @@ keystore.properties
 *.jks
 *.keystore
 tools/.cache/
+SESSION_LOG.md
+.claude/
