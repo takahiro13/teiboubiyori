@@ -161,8 +161,8 @@ def main():
     except OSError:
         raise SystemExit("すでに別の build_ports.py が動いています")
     verify = "--no-verify" not in sys.argv
-    recs = list(ports()) + list(fishing_ports()) + list(facilities())
-    print(f"{len(recs)} 件 (港湾+漁港+施設)")
+    recs = list(dict.fromkeys(list(ports()) + list(fishing_ports()) + list(facilities())))
+    print(f"{len(recs)} 件 (港湾+漁港+施設。重複除去済み)")
 
     rows = []
     for kind, pref, name, area, lat, lon in recs:

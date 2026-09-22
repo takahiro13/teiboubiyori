@@ -37,6 +37,6 @@ object Ports {
                     marineLat = c[6].toDouble(),
                     marineLon = c[7].toDouble(),
                 )
-            }.toList()
+            }.distinctBy { it.id }.toList() // ports.csv に重複行があっても LazyColumn の key 衝突でクラッシュしないようにする
         }
 }
