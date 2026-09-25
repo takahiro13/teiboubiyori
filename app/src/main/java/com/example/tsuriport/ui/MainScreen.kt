@@ -1,23 +1,26 @@
 package com.example.tsuriport.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,10 +43,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,11 +75,13 @@ import com.example.tsuriport.data.Level
 import com.example.tsuriport.data.Port
 import com.example.tsuriport.data.PortKind
 import com.example.tsuriport.data.Ports
+import com.example.tsuriport.data.Region
 import com.example.tsuriport.data.TideCalculator
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 private val dayFormat = DateTimeFormatter.ofPattern("M/d(E)", Locale.JAPAN)
 
@@ -170,7 +178,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun PortPicker(ports: List<Port>, current: Port, onSelect: (Port) -> Unit, onDismiss: () -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -186,6 +194,28 @@ private fun PortPicker(ports: List<Port>, current: Port, onSelect: (Port) -> Uni
             .groupBy { it.prefecture }
     }
     val count = grouped.values.sumOf { it.size }
+    // 各都道府県の見出しが LazyColumn の何番目にあるか (見出し1行 + 港の行数 で進む)
+    val headerIndex = remember(grouped) {
+        var i = 0
+        grouped.mapValues { (_, list) -> i.also { i += 1 + list.size } }
+    }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    // いま一覧の先頭に見えている都道府県。地方・県ボタンのハイライトに使う
+    val visiblePrefecture by remember(headerIndex) {
+        derivedStateOf {
+            val first = listState.firstVisibleItemIndex
+            headerIndex.entries.lastOrNull { it.value <= first }?.key
+        }
+    }
+    val visibleRegion = visiblePrefecture?.let { Region.of(it) }
+    // 見出しの位置(Int)をボタンに渡す。都道府県名だけ渡すと、Compose が onClick のラムダを使い回したときに
+    // 絞り込み前の headerIndex で計算されて、別の県へ飛んでしまう
+    fun jumpTo(index: Int?) {
+        index?.let { scope.launch { listState.scrollToItem(it) } }
+    }
+    // 開いたときは、いま選んでいる港の都道府県から表示する
+    LaunchedEffect(Unit) { headerIndex[current.prefecture]?.let { listState.scrollToItem(it) } }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize()) {
@@ -211,10 +241,37 @@ private fun PortPicker(ports: List<Port>, current: Port, onSelect: (Port) -> Uni
                         )
                     }
                 }
+                // 地方ボタン: その地方の最初の県へジャンプ。港が0件の地方は押せない。
+                // 横スクロールだと右端の「九州・沖縄」などが隠れて気づかれないので、折り返して全部見せる
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Region.entries.forEach { r ->
+                        val index = r.prefectures.firstNotNullOfOrNull { headerIndex[it] }
+                        FilterChip(
+                            selected = r == visibleRegion,
+                            onClick = { jumpTo(index) },
+                            enabled = index != null,
+                            label = { Text(r.label) },
+                        )
+                    }
+                }
+                // 県ボタン: いま見えている地方の県だけを並べる
+                val regionPrefectures = visibleRegion?.prefectures?.filter { it in headerIndex }.orEmpty()
+                if (regionPrefectures.size > 1) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        regionPrefectures.forEach { pref ->
+                            val index = headerIndex[pref]
+                            FilterChip(
+                                selected = pref == visiblePrefecture,
+                                onClick = { jumpTo(index) },
+                                label = { Text(pref) },
+                            )
+                        }
+                    }
+                }
                 if (count == 0) {
                     Text("該当する場所がありません。", modifier = Modifier.padding(16.dp))
                 }
-                LazyColumn(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize(), state = listState) {
                     grouped.forEach { (prefecture, list) ->
                         stickyHeader(key = "h-$prefecture") {
                             Text(
